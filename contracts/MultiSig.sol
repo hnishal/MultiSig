@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 contract MultiSig {
     using Counters for Counters.Counter;
     Counters.Counter pendingTransactions;
-
+    address public deployer;
     address public treasuryAddress;
     event Deposit(address indexed sender, uint256 amount, uint256 balance);
     event SubmitTransaction(
@@ -68,6 +68,7 @@ contract MultiSig {
             owners.push(owner);
         }
         numConfirmationRequired = _numConfirmations;
+        deployer = msg.sender;
     }
 
     receive() external payable {
@@ -125,6 +126,7 @@ contract MultiSig {
         }("");
         require(sent, "Transaction failed");
         pendingTransactions.decrement;
+        transaction[_txIndex].executed = true;
         emit ExecuteTransaction(msg.sender, _txIndex);
     }
 
@@ -146,7 +148,27 @@ contract MultiSig {
         return owners;
     }
 
-    function getTransactionCount() public view returns (uint256) {
+    function getTotalTransactionCount() public view returns (uint256) {
         return transaction.length;
+    }
+
+    function getpendingTransaxtion() public view returns (uint256) {
+        return pendingTransactions.current();
+    }
+
+    function getTransactionStatus(uint256 _txIndex) public view returns (bool) {
+        return transaction[_txIndex].executed;
+    }
+
+    function retSigned(uint256 _txIndex, address _owner)
+        public
+        view
+        returns (bool)
+    {
+        return isConfirmed[_txIndex][_owner];
+    }
+
+    function getDeployers() public view returns (address) {
+        return deployer;
     }
 }
